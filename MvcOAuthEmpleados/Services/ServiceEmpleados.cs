@@ -3,6 +3,7 @@ using System.Text;
 using MvcOAuthEmpleados.Models;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
+using NuGet.Common;
 
 namespace MvcOAuthEmpleados.Services
 {
@@ -124,6 +125,46 @@ namespace MvcOAuthEmpleados.Services
             string request = "api/empleados/compis";
             List<Empleado> empleados = await this.CallApiAsync<List<Empleado>>(request, token);
             return empleados;
+        }
+
+        public async Task<List<string>> GetOficiosAsync()
+        {
+            string request = "api/Empleados/Oficios";
+            List<string> oficios = await this.CallApiAsync<List<string>>(request);
+            return oficios;
+        }
+
+        private string TransformConllectionToQuery(List<string> collection)
+        {
+            string result = "";
+            foreach(string elem in collection)
+            {
+                result += "oficio=" + elem + "&";
+            }
+            result = result.TrimEnd('&');
+            return result;
+        }
+
+        public async Task<List<Empleado>> GetEmpleadosOficiosAsync(List<string> oficios)
+        {
+            string request = "api/Empleados/EmpleadosOficios";
+            string data = this.TransformConllectionToQuery(oficios);
+            List<Empleado> empleados = await this.CallApiAsync<List<Empleado>>(request + "?" + data);
+            return empleados;
+        }
+
+        public async Task UpdateEmpleadosOficioAsync(int incremento, List<string> oficios)
+        {
+            string request = "api/empleados/incrementarsalarios/" + incremento;
+            string data = this.TransformConllectionToQuery(oficios);
+            using(HttpClient client = new HttpClient())
+            {
+                client.BaseAddress = new Uri(this.UrlApi);
+                client.DefaultRequestHeaders.Clear();
+                client.DefaultRequestHeaders.Accept.Add(this.header);
+                //client.DefaultRequestHeaders.Add("Authorization", "bearer " + token);
+                HttpResponseMessage response = await client.PutAsync(request + "?" + data, null);
+            }
         }
     }
 }
